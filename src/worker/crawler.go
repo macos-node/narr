@@ -46,7 +46,7 @@ func DiscoverFeed(candidateUrl string) (*DiscoverResult, error) {
 	}
 	cs := getCharset(res)
 
-	body, err := io.ReadAll(res.Body)
+	body, err := readAtMost(res.Body, maxBodyBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -110,7 +110,7 @@ func findFavicon(siteUrl, feedUrl string) (*[]byte, error) {
 	if siteUrl != "" {
 		if res, err := client.get(siteUrl); err == nil {
 			defer res.Body.Close()
-			if body, err := io.ReadAll(res.Body); err == nil {
+			if body, err := readAtMost(res.Body, maxBodyBytes); err == nil {
 				urls = append(urls, scraper.FindIcons(string(body), siteUrl)...)
 				if c := favicon(siteUrl); c != "" {
 					urls = append(urls, c)
@@ -137,7 +137,7 @@ func getIcons(urls []string) (*[]byte, error) {
 			continue
 		}
 
-		content, err := io.ReadAll(res.Body)
+		content, err := readAtMost(res.Body, maxIconBytes)
 		if err != nil {
 			continue
 		}
@@ -206,7 +206,7 @@ func reload(f storage.Feed, db *storage.Storage) (string, []storage.Item, error)
 		return "", nil, nil
 	}
 
-	feed, err := parser.ParseAndFix(res.Body, f.FeedLink, getCharset(res))
+	feed, err := parser.ParseAndFix(capped(res.Body, maxBodyBytes), f.FeedLink, getCharset(res))
 	if err != nil {
 		return "", nil, err
 	}
@@ -249,7 +249,7 @@ func GetBody(url string) (string, error) {
 	} else {
 		r = res.Body
 	}
-	body, err := io.ReadAll(r)
+	body, err := readAtMost(r, maxBodyBytes)
 	if err != nil {
 		return "", err
 	}

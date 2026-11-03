@@ -28,15 +28,24 @@ func Authenticate(rw http.ResponseWriter, username, password, basepath string) {
 		Value:   username + ":" + secret(username, password),
 		Expires: time.Now().Add(time.Hour * 24 * 7), // 1 week,
 		Path:    basepath,
+		// Script in a feed article must not be able to read the session
+		// token. Secure is deliberately absent: narr is commonly served over
+		// plain HTTP on a loopback address or inside a LAN, and setting it
+		// there stops the cookie being sent at all. Terminating TLS is the
+		// reverse proxy's job and it can add Secure itself.
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
 func Logout(rw http.ResponseWriter, basepath string) {
 	http.SetCookie(rw, &http.Cookie{
-		Name:   "auth",
-		Value:  "",
-		MaxAge: -1,
-		Path:   basepath,
+		Name:     "auth",
+		Value:    "",
+		MaxAge:   -1,
+		Path:     basepath,
+		HttpOnly: true,
+		SameSite: http.SameSiteLaxMode,
 	})
 }
 
