@@ -2,7 +2,7 @@ VERSION=$(shell git describe --tags | sed 's/^.\(.*\)/\1/')
 
 GO_LDFLAGS = -s -w -X 'main.Version=$(VERSION)'
 
-export GOARCH      ?= amd64
+export GOARCH      ?= $(shell go env GOARCH)
 export CGO_ENABLED  = 1
 
 build_default:
